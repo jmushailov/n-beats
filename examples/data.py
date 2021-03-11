@@ -146,15 +146,12 @@ def get_m4_data_multivariate(backcast_length, forecast_length, is_training=True)
     filename = '../examples/data/m4/train/Daily-train.csv'
     x_tl = []
     x_max = []
-    headers = True
-    with open(filename, "r") as file:
+    with open(filename) as file:
         reader = csv.reader(file, delimiter=',')
+        next(reader)  # burn header.
         for line in reader:
             line = line[1:]
-            if not headers:
-                x_tl.append(line)
-            if headers:
-                headers = False
+            x_tl.append(line)
     x_tl_tl = np.array(x_tl)
     for i in range(x_tl_tl.shape[0]):
         if len(x_tl_tl[i]) < backcast_length + forecast_length:

@@ -1,29 +1,29 @@
 import os
 from argparse import ArgumentParser
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from data import dummy_data_generator_multivariate, get_m4_data_multivariate, get_nrj_data, get_kcg_data
 
+from data import dummy_data_generator_multivariate, get_m4_data_multivariate, get_nrj_data, get_kcg_data
 from nbeats_keras.model import NBeatsNet
 
 
 def get_script_arguments():
     parser = ArgumentParser()
-    parser.add_argument('--task', choices=['m4', 'kcg', 'nrj', 'dummy'], required=True)
-    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--task', choices=['m4', 'kcg', 'nrj', 'dummy'], default='m4')
+    parser.add_argument('--dry-run', action='store_true')
     return parser.parse_args()
 
 
 def get_metrics(y_true, y_hat):
-    error = np.mean(np.square(y_true - y_hat))
     smape = np.mean(2 * np.abs(y_true - y_hat) / (np.abs(y_true) + np.abs(y_hat)))
+    error = np.mean(np.square(y_true - y_hat))
     return smape, error
 
 
 def ensure_results_dir():
-    if not os.path.exists('results/test'):
-        os.makedirs('results/test')
+    Path('results/test').mkdir(parents=True, exist_ok=True)
 
 
 def reshape_array(x):
@@ -46,10 +46,10 @@ def generate_data(backcast_length, forecast_length):
     return x_train, None, y_train, x_test, None, y_test
 
 
-def train_model(model: NBeatsNet, task: str, best_perf=np.inf, max_steps=10001, plot_results=100, is_test=False):
+def train_model(model: NBeatsNet, task: str, best_perf=np.inf, max_steps=10001, plot_results=100, dry_run=False):
     ensure_results_dir()
     # if is_test then override max_steps argument
-    if is_test:
+    if dry_run:
         max_steps = 5
 
     if task == 'dummy':
@@ -165,7 +165,7 @@ def main():
         raise ValueError('Unknown task.')
 
     model.compile_model(loss='mae', learning_rate=1e-5)
-    train_model(model, args.task, is_test=args.test)
+    train_model(model, args.task, dry_run=args.dry_run)
 
 
 if __name__ == '__main__':
